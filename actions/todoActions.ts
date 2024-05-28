@@ -4,45 +4,43 @@ import { eq, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 import db from "@/db/drizzle";
+import { prisma } from "@/db/prisma";
 import { todo } from "@/db/schema";
 
 export const getData = async () => {
-  const data = await db.select().from(todo);
-  return data;
+  const todos = await prisma.todo.findMany({
+    orderBy: { id: "asc" },
+  });
+  return todos;
 };
 
 export const addTodo = async (id: number, text: string) => {
-  await db.insert(todo).values({
-    id: id,
-    text: text,
-  });
+  await prisma.todo.create({
+    data: { id, text },
+  })
   revalidatePath("/");
 };
 
 export const deleteTodo = async (id: number) => {
-  await db.delete(todo).where(eq(todo.id, id));
-
+  await prisma.todo.delete({ where: { id } });
   revalidatePath("/");
 };
 
 export const toggleTodo = async (id: number) => {
-  await db
-    .update(todo)
-    .set({
-      done: not(todo.done),
+  const todo = await prisma.todo.findUnique({ where: { id } });
+  if (todo) {
+    await prisma.todo.update({
+      where: { id: todo.id },
+      data: { done: !todo.done },
     })
-    .where(eq(todo.id, id));
-
-  revalidatePath("/");
+    revalidatePath("/");
+  }
 };
 
 export const editTodo = async (id: number, text: string) => {
-  await db
-    .update(todo)
-    .set({
-      text: text,
-    })
-    .where(eq(todo.id, id));
-
+  await prisma.todo.update({
+    where: { id },
+    data: { text },
+  })
   revalidatePath("/");
 };
