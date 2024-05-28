@@ -1,11 +1,8 @@
 "use server";
 
-import { eq, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
-import db from "@/db/drizzle";
 import { prisma } from "@/db/prisma";
-import { todo } from "@/db/schema";
 
 export const getData = async () => {
   const todos = await prisma.todo.findMany({
